@@ -1,4 +1,5 @@
-﻿# docker build -t vietphan/importer .
+﻿# docker build -t vietphan/importer:v01 .
+# docker push vietphan/importer:v01
 FROM mcr.microsoft.com/dotnet/core/aspnet:3.1-buster-slim AS base
 WORKDIR /app
 
