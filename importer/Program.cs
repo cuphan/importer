@@ -6,6 +6,7 @@ using Newtonsoft.Json.Linq;
 using McMaster.Extensions.CommandLineUtils;
 using System.Data;
 using System.Data.SqlClient;
+using Microsoft.Extensions.Configuration;
 
 namespace importer
 {
@@ -112,6 +113,12 @@ namespace importer
 
         private void OnExecute()
         {
+            var env = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
+            var builder = new ConfigurationBuilder()
+                    .AddJsonFile($"appsettings.json", true, true)
+                    .AddEnvironmentVariables();
+            var config = builder.Build();
+
             var productJsonString = File.ReadAllText(jsonFile);
             //Console.WriteLine(productJsonString);
             Console.WriteLine("Processing {0}", Path.GetFileName(jsonFile));
@@ -120,23 +127,23 @@ namespace importer
             //Console.WriteLine(root.products);
             //Console.WriteLine(root.transmissionsummary);
 
-            var datasource = @"localhost";//your server
-            var database = "DevOpsDB"; //your database name
-            var username = "sa"; //username of server to connect
-            var password = "p@ssw0rd"; //password
+            //var datasource = @"localhost";//your server
+            //var database = "DevOpsDB"; //your database name
+            //var username = "sa"; //username of server to connect
+            //var password = "p@ssw0rd"; //password
 
             //your connection string 
-            string connString = @"Data Source=" + datasource + ";Initial Catalog=" + database + ";Persist Security Info=True;User ID=" + username + ";Password=" + password;
+            //string connString = @"Data Source=" + datasource + ";Initial Catalog=" + database + ";Persist Security Info=True;User ID=" + username + ";Password=" + password;
+            //var connString = config["ConnectionString"];
 
-            SqlConnection conn = new SqlConnection(connString);
+            //Console.WriteLine("ConnectionString: {0}", config["ConnectionString"]);
+            SqlConnection conn = new SqlConnection(config["ConnectionString"]);
 
             try
-            {
-                
+            {                
                 conn.Open();
 
                 // check if transmissionsummary.id not in the table
-                
                 if (checkTransmission(conn, root.transmissionsummary.id) == false) {
                     // insert to transmission table
                     insertTransmission(conn, root);
@@ -150,7 +157,6 @@ namespace importer
                     //query product
                     SqlDataReader reader = queryProduct(conn);
 
-                    
                     if (reader.HasRows)
                     {
                         while (reader.Read())
@@ -159,7 +165,6 @@ namespace importer
                             var location = reader.GetString(1);
                             var price = reader.GetDecimal(2).ToString();
                             
-                            //display retrieved record
                             Console.WriteLine("{0} - {1} - {2}", category, location, price);
                         }
                     }
@@ -167,21 +172,7 @@ namespace importer
                     {
                         Console.WriteLine("No data found.");
                     }
-                }
-
-                //foreach (var product in root.products)
-                //{
-                //var category = product.category.Split('>');
-
-                //var p = new Product();
-                //Console.WriteLine("sku={0}, description={1}, category={2}, price={3}, location={4}, qty={5}", product.sku, product.description, product.category, product.price, product.location, product.qty);
-                // extract category before insert to table
-
-                //Console.WriteLine(product.category.GetType());
-                //processCategory(product.category);
-                //}
-
-                //Console.WriteLine("id={0}, recordcount={1}, qtysum={2}", root.transmissionsummary.id, root.transmissionsummary.recordcount, root.transmissionsummary.qtysum);
+                }                
             }
             catch (Exception e)
             {
